@@ -13,6 +13,7 @@ export type {
 export {
   calculateLandedCost,
   computeTeaserAmount,
+  isDomesticRoute,
   resolveDutyRate,
   resolveVatRate,
   consolidateSources,

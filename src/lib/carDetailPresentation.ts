@@ -1,4 +1,21 @@
+import { hasScrapedChrome } from "./listingDescription"
+import { stripHtml } from "./stripHtml"
+
 export type RegionalBands = object
+
+/**
+ * The seller's own words, or null. Scraped page furniture is stripped upstream
+ * (src/lib/listingDescription.ts); this is the last gate, so a listing whose
+ * description was only the source platform's own page hides the section instead
+ * of publishing a competitor's navigation and pricing table.
+ */
+export function sellerDescriptionText(
+  car: { history?: string | null; description?: string | null },
+): string | null {
+  const text = stripHtml(car.history ?? car.description ?? "").trim()
+  if (!text) return null
+  return hasScrapedChrome(text) ? null : text
+}
 
 function validBand(band: { low: number; high: number } | undefined) {
   return Boolean(band && Number.isFinite(band.low) && Number.isFinite(band.high) && band.low > 0 && band.high >= band.low)

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js"
+import { sanitizeListingDescription } from "@/lib/listingDescription"
 import type { RewriterSource } from "./sourceHash"
 
 function getClient() {
@@ -43,6 +44,8 @@ export async function loadListingSource(
     body_style: (data.body_style as string | null) ?? null,
     location: (data.location as string | null) ?? null,
     platform: (data.platform as string | null) ?? null,
-    description_text: (data.description_text as string | null) ?? null,
+    // Never hand the rewriter a scraped source page: it would turn a
+    // competitor's navigation and pricing table into MonzaHaus copy.
+    description_text: sanitizeListingDescription(data.description_text as string | null),
   }
 }

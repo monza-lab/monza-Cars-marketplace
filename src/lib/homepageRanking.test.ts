@@ -87,7 +87,7 @@ describe("homepage ranking", () => {
     expect(ranked.slice(0, 10).every((row) => Number(row.listing.currentBid) > 0)).toBe(true);
   });
 
-  it("prioritizes verified fair-value bands inside the conversion window", () => {
+  it("does not let a family fair-value band decide what leads the fold", () => {
     const withoutBand = listing("without-band", { rarityScore: 100, currentBid: 90_000 });
     const withBand = listing("with-band", {
       rarityScore: 10,
@@ -97,7 +97,9 @@ describe("homepage ranking", () => {
 
     const ranked = rankHomepageListings([withoutBand, withBand], undefined, { limit: 2 });
 
-    expect(ranked[0].listing.id).toBe("with-band");
+    // The band describes the family, not this car, so collector significance
+    // and intrinsic rarity still decide the order.
+    expect(ranked[0].listing.id).toBe("without-band");
   });
 
   it("keeps the top ten relatable while retaining one or two credible halo cars", () => {
@@ -278,7 +280,7 @@ describe("homepage ranking", () => {
     expect(ranked.map((row) => row.listing.id)).toEqual(["z-classic-icon", "a-hypercar"]);
   });
 
-  it("does not count replicas or tributes toward the guaranteed classic portfolio", () => {
+  it("keeps replicas, tributes and impossible vintages out of featured results", () => {
     const replica = listing("replica", {
       year: 1957,
       model: "356 Speedster Replika",
@@ -295,10 +297,27 @@ describe("homepage ranking", () => {
       rarityScore: 100,
       raritySignals: ["classic_significance"],
     });
+    // A "356 speedster" from 1985 is a kit car; the factory stopped in 1965.
+    const impossibleVintage = listing("post-production-356", {
+      year: 1985,
+      model: "356 speedster",
+      trim: null,
+      title: "1985 Porsche 356 speedster",
+      rarityScore: 100,
+      raritySignals: ["classic_significance"],
+    });
+    const genuine = listing("genuine", {
+      year: 2019,
+      rarityScore: 40,
+    });
 
-    const ranked = rankHomepageListings([replica, tribute], undefined, { limit: 2 });
+    const ranked = rankHomepageListings(
+      [replica, tribute, impossibleVintage, genuine],
+      undefined,
+      { limit: 4 },
+    );
 
-    expect(ranked.map((row) => row.isClassic)).toEqual([false, false]);
+    expect(ranked.map((row) => row.listing.id)).toEqual(["genuine"]);
   });
 
   it("penalizes missing photography and produces deterministic ties", () => {

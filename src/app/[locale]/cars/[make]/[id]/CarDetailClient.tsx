@@ -62,6 +62,7 @@ import {
   hasMeaningfulTrend,
   hasRegionalPricing,
   navigateBackOrBrowse,
+  sellerDescriptionText,
 } from "@/lib/carDetailPresentation"
 import { markReportCtaClicked } from "@/lib/reportFunnel"
 
@@ -948,6 +949,9 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
     : null
   const isBelowFair = hasFairValue && bidInCurrency < (fairLow + fairHigh) / 2
 
+  // The seller's own words, or nothing. Never the source platform's page.
+  const sellerDescription = sellerDescriptionText(car)
+
   const pricing = mobilePricing
   const hasPricing = hasRegionalPricing(pricing)
   const bestRegion = findBestPricedRegion(pricing)
@@ -1338,12 +1342,14 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
           </div>
 
           {/* 3. Seller's Description */}
-          <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
-            <div className="pl-4 border-l border-border">
-              <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
-          </CollapsibleSection>
+          {sellerDescription && (
+            <CollapsibleSection title={t("sellersDescription")} icon={<History className="size-5" />} defaultOpen>
+              <div className="pl-4 border-l border-border">
+                <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{sellerDescription}</p>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
+            </CollapsibleSection>
+          )}
 
           {/* 4. Regional Valuation */}
           <div className={hasPricing ? "rounded-xl bg-card border border-border p-4" : "hidden"}>
@@ -1762,16 +1768,18 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               )}
 
               {/* PROVENANCE */}
-              <div className="rounded-xl bg-card border border-border p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <History className="size-4 text-primary" />
-                  <h2 className="text-[12px] font-semibold text-foreground">{t("sellersDescription")}</h2>
+              {sellerDescription && (
+                <div className="rounded-xl bg-card border border-border p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <History className="size-4 text-primary" />
+                    <h2 className="text-[12px] font-semibold text-foreground">{t("sellersDescription")}</h2>
+                  </div>
+                  <div className="pl-4 border-l border-border">
+                    <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{sellerDescription}</p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
                 </div>
-                <div className="pl-4 border-l border-border">
-                  <p className="font-serif italic text-[14px] text-foreground/75 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-3 italic">{t("source", { platform: car.platform.replace(/_/g, " ") })}</p>
-              </div>
+              )}
 
               {/* KEY INSPECTION POINTS */}
               <div className="rounded-xl bg-card border border-border p-5">

@@ -3,7 +3,7 @@ import { formatLandedCost } from "@/lib/landedCost/format";
 import { TAX_RULES } from "@/lib/landedCost/taxes";
 
 // [HARDCODED] all country names below
-const COUNTRY_LABEL: Record<string, string> = {
+export const COUNTRY_LABEL: Record<string, string> = {
   US: "United States",
   DE: "Germany",
   UK: "United Kingdom",

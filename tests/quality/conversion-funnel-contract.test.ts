@@ -39,6 +39,61 @@ describe("conversion funnel contract", () => {
     expect(`${reportSheet}\n${detail}`).not.toContain("<SeeSampleModal")
   })
 
+  it("never sells a family band as one car's fair value", () => {
+    const card = read("src/components/browse/BrowseCard.tsx")
+    const cache = read("src/lib/dashboardCache.ts")
+    const ranking = read("src/lib/homepageRanking.ts")
+
+    // No delta pill on a card: the only band a card holds is the family's.
+    expect(card).not.toContain("<MarketDeltaPill")
+    expect(card).toContain("resolveFamilyBandLabel")
+    expect(card).not.toMatch(/Fair value \{/)
+    expect(cache).toContain("isFamilyBandRepresentative")
+    expect(cache).toContain("bandBracketsPrice")
+    // The band must not decide what leads the fold.
+    expect(ranking).not.toMatch(/if \(a\.hasFairValueBand !== b\.hasFairValueBand\)/)
+    expect(ranking).toContain("isPostProductionClassic")
+  })
+
+  it("keeps the source platform's own page out of listing copy", () => {
+    const reader = read("src/lib/supabaseLiveListings.ts")
+    const detail = read("src/app/[locale]/cars/[make]/[id]/CarDetailClient.tsx")
+    const classicScraper = read("src/features/scrapers/classic_collector/detail.ts")
+
+    expect(reader).toContain("sanitizeListingDescription(row.description_text)")
+    expect(reader).toContain("sanitizeListingDescription(row.seller_notes)")
+    expect(detail).toContain("sellerDescriptionText(car)")
+    expect(detail).toContain("{sellerDescription && (")
+    expect(classicScraper).toContain("extractSellerDescription(bodyText)")
+    expect(classicScraper).not.toContain("description: bodyText.trim()")
+  })
+
+  it("dates the report instead of naming the engine that wrote it", () => {
+    const story = read("src/components/report/InvestmentStoryBlock.tsx")
+
+    expect(story).not.toContain("narrative.generatedBy")
+    expect(story).toContain("Prepared")
+  })
+
+  it("pays the landed-cost promise and writes MonzaHaus as one word", () => {
+    const reportClient = read("src/app/[locale]/cars/[make]/[id]/report/ReportClient.tsx")
+    const reportPage = read("src/app/[locale]/cars/[make]/[id]/report/page.tsx")
+
+    expect(reportClient).not.toMatch(/Monza Haus/)
+    expect(reportClient).toContain("report?.landed_cost ?? landedCostEstimate")
+    expect(reportClient).not.toContain("Landed cost not estimated")
+    expect(reportPage).toContain("calculateLandedCost")
+  })
+
+  it("keeps the consent banner off the dialog layer during the email ask", () => {
+    const banner = read("src/components/legal/CookieBanner.tsx")
+    const browse = read("src/components/browse/BrowseClient.tsx")
+
+    expect(banner).toContain("useOpenDialog")
+    expect(banner).toContain("!dialogOpen")
+    expect(browse).toContain("dialogOpen")
+  })
+
   it("publishes one allowlisted real report as the durable sample", () => {
     const reportPage = read("src/app/[locale]/cars/[make]/[id]/report/page.tsx")
     const detailPage = read("src/app/[locale]/cars/[make]/[id]/page.tsx")

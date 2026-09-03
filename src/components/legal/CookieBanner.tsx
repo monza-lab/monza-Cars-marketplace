@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { useConsent } from "./ConsentProvider"
 import { COOKIE_BANNER_VISIBILITY_EVENT } from "@/lib/reportFunnel"
+import { useOpenDialog } from "@/lib/useOpenDialog"
 
 // Editorial Salon banner — minimalista, on-brand:
 // - Bottom card on every viewport (full width on mobile, ~520px max desktop)
@@ -26,6 +27,12 @@ export function CookieBanner() {
   const t = useTranslations("cookies")
   const { consent, accept, reject } = useConsent()
   const [ready, setReady] = useState(false)
+  // The banner outranks the dialog layer (z-80 vs z-50), so while a sheet is
+  // open it would cover the reassurance and the Privacy link at the exact
+  // moment we ask for an email. Consent is still pending; we only defer the ask
+  // until the reader closes the sheet.
+  const dialogOpen = useOpenDialog()
+  const visible = consent === "pending" && ready && !dialogOpen
 
   useEffect(() => {
     if (consent !== "pending") {
@@ -50,11 +57,11 @@ export function CookieBanner() {
 
   useEffect(() => {
     window.dispatchEvent(new Event(COOKIE_BANNER_VISIBILITY_EVENT))
-  }, [ready, consent])
+  }, [visible])
 
   return (
     <AnimatePresence>
-      {consent === "pending" && ready && (
+      {visible && (
         <motion.div
           role="region"
           aria-label="Cookie consent"

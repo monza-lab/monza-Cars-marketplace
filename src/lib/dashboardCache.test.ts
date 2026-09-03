@@ -557,6 +557,22 @@ describe("dashboard cache", () => {
   })
 
   it("attaches verified family valuation bands to browse cards", async () => {
+    // An ordinary car of the family: the segment band can describe it.
+    const ordinaryCar = {
+      ...activeCar,
+      model: "992 Carrera S",
+      title: "2023 Porsche 992 Carrera S",
+    }
+    for (let call = 0; call < 5; call += 1) {
+      fetchPaginatedListings.mockResolvedValueOnce({
+        cars: [ordinaryCar],
+        hasMore: false,
+        nextCursor: null,
+        totalCount: 1,
+        totalLiveCount: 1,
+      })
+    }
+
     const { fetchDashboardDataUncached } = await import("./dashboardCache")
     const data = await fetchDashboardDataUncached()
 
@@ -566,6 +582,34 @@ describe("dashboard cache", () => {
       UK: { currency: "£", low: 288000, high: 304000 },
       JP: { currency: "¥", low: 310000, high: 325000 },
     })
+  })
+
+  it("withholds the family band from cars it cannot describe", async () => {
+    const { attachRegionalFairValues } = await import("./dashboardCache")
+    const valuation = dashboardValuation as Parameters<typeof attachRegionalFairValues>[1]
+
+    const [special] = attachRegionalFairValues(
+      // GT3 RS: priced by its own scarcity, not by the 992 segment.
+      [{ ...activeCar, model: "992 GT3 RS", title: "2023 Porsche 992 GT3 RS" } as never],
+      valuation,
+    )
+    const [replica] = attachRegionalFairValues(
+      [{ ...activeCar, model: "356 speedster", year: 1985, title: "1985 Porsche 356 speedster" } as never],
+      valuation,
+    )
+    const [outsideBand] = attachRegionalFairValues(
+      [{ ...activeCar, model: "992 Carrera", title: "2023 Porsche 992 Carrera", askingPriceUsd: 1_200_000 } as never],
+      valuation,
+    )
+    const [inBand] = attachRegionalFairValues(
+      [{ ...activeCar, model: "992 Carrera", title: "2023 Porsche 992 Carrera", askingPriceUsd: 300_000 } as never],
+      valuation,
+    )
+
+    expect(special.fairValueByRegion).toBeUndefined()
+    expect(replica.fairValueByRegion).toBeUndefined()
+    expect(outsideBand.fairValueByRegion?.US).toEqual({ currency: "$", low: 0, high: 0 })
+    expect(inBand.fairValueByRegion?.US).toEqual({ currency: "$", low: 290000, high: 315000 })
   })
 
   it("keeps listings when ancillary dashboard queries fail", async () => {

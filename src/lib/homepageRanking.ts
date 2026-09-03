@@ -1,4 +1,5 @@
 import { extractSeries, getSeriesForBrand, matchVariant } from "./brandConfig";
+import { isPostProductionClassic } from "./familyFairValueBand";
 import { hasReplicaOrTributeLanguage, isHistoricClassicIcon } from "./listingRarity";
 
 export type HomepageRankingListing = {
@@ -300,6 +301,12 @@ export function isHomepageFeatureEligible(listing: HomepageRankingListing): bool
   const variant = resolveHomepageVariant(listing);
   if (!/\bporsche\b/i.test(listing.title) && !variant.recognized) return false;
 
+  // A replica priced against the real car's family reads as a bargain to the
+  // reader and as ignorance to a collector. Same for a "356" built decades
+  // after the last one left the factory.
+  if (hasReplicaOrTributeLanguage(listing)) return false;
+  if (isPostProductionClassic(listing)) return false;
+
   const descriptor = `${listing.title} ${listing.model} ${listing.trim ?? ""}`;
   const price = listingPriceUsd(listing);
   const haloFloor = HALO_PRICE_FLOORS.find(({ pattern }) => pattern.test(descriptor));
@@ -362,7 +369,8 @@ function compareRanked<T extends HomepageRankingListing>(
 ): number {
   if (a.priceUsd !== null && b.priceUsd === null) return -1;
   if (a.priceUsd === null && b.priceUsd !== null) return 1;
-  if (a.hasFairValueBand !== b.hasFairValueBand) return a.hasFairValueBand ? -1 : 1;
+  // A family band is evidence about the family, not about this car, so it must
+  // not decide what leads the fold. `hasFairValueBand` stays as a diagnostic.
   if (a.collectorPriority !== b.collectorPriority) return b.collectorPriority - a.collectorPriority;
   if (a.intrinsicScore !== b.intrinsicScore) return b.intrinsicScore - a.intrinsicScore;
   if (a.evidenceScore !== b.evidenceScore) return b.evidenceScore - a.evidenceScore;

@@ -44,7 +44,11 @@ import type { DbComparableRow } from "@/lib/db/queries"
 import { SignalsDetectedSection } from "@/components/report/SignalsDetectedSection"
 import { SignalsMissingSection } from "@/components/report/SignalsMissingSection"
 import { ModifiersAppliedList } from "@/components/report/ModifiersAppliedList"
-import { LandedCostBlock } from "@/components/report/LandedCostBlock"
+import {
+  COUNTRY_LABEL as LANDED_COST_COUNTRY,
+  LandedCostBlock,
+} from "@/components/report/LandedCostBlock"
+import type { Country, LandedCostBreakdown } from "@/lib/landedCost"
 import { SourcesBlock } from "@/components/report/SourcesBlock"
 import { useReport } from "@/hooks/useAnalysis"
 import { useRegion } from "@/lib/RegionContext"
@@ -53,6 +57,7 @@ import { formatRegionalPrice, formatUsd } from "@/lib/regionPricing"
 import { useCurrency } from "@/lib/CurrencyContext"
 import { useTheme } from "next-themes"
 import { stripHtml } from "@/lib/stripHtml"
+import { sellerDescriptionText } from "@/lib/carDetailPresentation"
 import { useAuth } from "@/lib/auth/AuthProvider"
 import { AuthModal } from "@/components/auth/AuthModal"
 import { OutOfPistonsModal } from "@/components/payments/OutOfPistonsModal"
@@ -212,6 +217,9 @@ export function ReportClient({
   v3Report = null,
   userHasAccess = false,
   reportAccessToken,
+  landedCostEstimate = null,
+  landedCostDestination = "US",
+  landedCostDomestic = false,
 }: {
   car: CollectorCar
   similarCars: SimilarCarResult[]
@@ -221,6 +229,11 @@ export function ReportClient({
   v3Report?: HausReportV3 | null
   userHasAccess?: boolean
   reportAccessToken?: string
+  /** Server-computed fallback for reports persisted without a landed cost. */
+  landedCostEstimate?: LandedCostBreakdown | null
+  landedCostDestination?: Country
+  /** The car is already in the buyer's country — nothing to import. */
+  landedCostDomestic?: boolean
 }) {
   const { report: generatedReport, generating, error: reportError, triggerGeneration, creditsRemaining } = useReport(car.id)
   void generating
@@ -231,6 +244,9 @@ export function ReportClient({
   // The hook's triggerGeneration now reloads the page on success, so the server component
   // re-fetches the persisted HausReport via assembleHausReportFromDB.
   const report: HausReport | null = existingReport ?? (generatedReport as unknown as HausReport | null)
+  const landedCost = report?.landed_cost ?? landedCostEstimate
+  // The seller's own words, or nothing — never the source platform's page.
+  const sellerDescription = sellerDescriptionText(car)
   const hasSignals = !!(report?.signals_extracted_at)
   const hasStats = !!(marketStats && marketStats.totalDataPoints > 0)
   const regions: RegionalMarketStats[] = marketStats?.regions ?? []
@@ -2664,16 +2680,18 @@ export function ReportClient({
                       ))}
                     </div>
 
-                    {/* Provenance */}
-                    <div className="rounded-xl bg-card border border-border p-5 mb-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <History className="size-4 text-primary" />
-                        <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
+                    {/* Provenance — the seller's own words only */}
+                    {sellerDescription && (
+                      <div className="rounded-xl bg-card border border-border p-5 mb-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <History className="size-4 text-primary" />
+                          <h3 className="text-[12px] font-semibold text-foreground">{t("identity.provenance")}</h3>
+                        </div>
+                        <div className="pl-4 border-l border-border">
+                          <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{sellerDescription}</p>
+                        </div>
                       </div>
-                      <div className="pl-4 border-l border-border">
-                        <p className="font-serif italic text-[14px] text-foreground/80 leading-relaxed whitespace-pre-line">{stripHtml(car.history)}</p>
-                      </div>
-                    </div>
+                    )}
 
                     {/* Platform data */}
                     <div className="rounded-xl bg-card border border-border p-5">
@@ -2998,11 +3016,15 @@ export function ReportClient({
               </PaywallSection>
             </section>
 
-            {/* --- LANDED COST --- */}
-            {report?.landed_cost ? (
+            {/* --- LANDED COST ---
+                Every CTA promises a landed cost, so a stored report without
+                one falls back to the server-computed estimate. Only a car that
+                is already home, or an origin outside the published matrix,
+                shows an explanation instead of numbers. */}
+            {landedCost ? (
               <>
-                <LandedCostBlock breakdown={report.landed_cost} locale={locale} />
-                <SourcesBlock sources={report.landed_cost.sourcesUsed} />
+                <LandedCostBlock breakdown={landedCost} locale={locale} />
+                <SourcesBlock sources={landedCost.sourcesUsed} />
               </>
             ) : report ? (
               <section className="rounded-lg border border-border p-6 my-8">
@@ -3010,11 +3032,22 @@ export function ReportClient({
                   Landed Cost (Estimate)
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Landed cost not estimated for vehicles originating in this
-                  country.{" "}
-                  <Link href="/contact" className="underline">
-                    Contact Monza Haus for a custom quote
-                  </Link>
+                  {landedCostDomestic ? (
+                    <>
+                      This car is already in{" "}
+                      {LANDED_COST_COUNTRY[landedCostDestination] ?? landedCostDestination}, so
+                      there is no import duty, shipping or tax to add to its price.
+                    </>
+                  ) : (
+                    <>
+                      Landed cost to{" "}
+                      {LANDED_COST_COUNTRY[landedCostDestination] ?? landedCostDestination} is not
+                      published for this car&apos;s origin yet.{" "}
+                      <Link href="/contact" className="underline">
+                        Contact MonzaHaus for a custom quote
+                      </Link>
+                    </>
+                  )}
                 </p>
               </section>
             ) : null}

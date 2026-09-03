@@ -13,6 +13,7 @@ import { partitionByPhoto } from "@/lib/photoSort";
 import { isImageUrlFailed, useImageFailureVersion } from "@/lib/imageFailureStore";
 import { CampaignContextStrip } from "./CampaignContextStrip";
 import { COOKIE_BANNER_VISIBILITY_EVENT, REPORT_CTA_EVENT } from "@/lib/reportFunnel";
+import { hasOpenDialog, useOpenDialog } from "@/lib/useOpenDialog";
 
 const REMOTE_PAGE_SIZE = 30;
 
@@ -21,13 +22,16 @@ export function shouldShowBrowseRescue({
   viewportHeight,
   consentVisible,
   reportClicked,
+  dialogOpen = false,
 }: {
   scrollY: number;
   viewportHeight: number;
   consentVisible: boolean;
   reportClicked: boolean;
+  /** A sticky CTA above the dialog layer would cover an open sheet. */
+  dialogOpen?: boolean;
 }) {
-  return scrollY > viewportHeight * 2 && !consentVisible && !reportClicked;
+  return scrollY > viewportHeight * 2 && !consentVisible && !reportClicked && !dialogOpen;
 }
 
 export function BrowseResultsGrid({
@@ -52,6 +56,7 @@ export function BrowseResultsGrid({
 function BrowseRescueCta() {
   const [visible, setVisible] = useState(false);
   const reportClickedRef = useRef(false);
+  const dialogOpen = useOpenDialog();
 
   useEffect(() => {
     reportClickedRef.current = window.sessionStorage.getItem(REPORT_CTA_EVENT) === "true";
@@ -60,6 +65,7 @@ function BrowseRescueCta() {
       viewportHeight: window.innerHeight,
       consentVisible: Boolean(document.querySelector('[aria-label="Cookie consent"]')),
       reportClicked: reportClickedRef.current,
+      dialogOpen: hasOpenDialog(document.body),
     }));
     const dismiss = () => {
       reportClickedRef.current = true;
@@ -78,7 +84,7 @@ function BrowseRescueCta() {
     };
   }, []);
 
-  if (!visible) return null;
+  if (!visible || dialogOpen) return null;
   return (
     <button
       type="button"

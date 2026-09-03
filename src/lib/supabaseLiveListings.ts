@@ -13,6 +13,7 @@ import {
   type SupportedLiveMake,
 } from "./makeProfiles";
 import { buildRegionalFairValue } from "./regionPricing";
+import { sanitizeListingDescription } from "./listingDescription";
 import { extractSeries, getSeriesConfig, resolveSeriesIdForFamily } from "./brandConfig";
 import { getExchangeRates } from "./exchangeRates";
 import { derivePrice } from "./pricing/derivePrice";
@@ -647,12 +648,17 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
     displayUnit = "mi";
   }
 
-  // Description → thesis (short) + history (full)
-  const desc = row.description_text ?? null;
+  // Description → thesis (short) + history (full).
+  // Scraped descriptions can arrive as the whole source page (nav, pricing
+  // table, their disclaimers). Sanitize once here so every consumer — detail
+  // page, metadata, JSON-LD, rarity scoring, report engine — sees either the
+  // seller's own words or nothing at all.
+  const desc = sanitizeListingDescription(row.description_text);
+  const sellerNotes = sanitizeListingDescription(row.seller_notes);
   const thesis = desc
     ? desc.slice(0, 300) + (desc.length > 300 ? "..." : "")
     : `Live auction listing from ${label}`;
-  const history = desc ?? `Sourced from ${label}`;
+  const history = desc ?? "";
 
   // Prefer direct platform column; fall back to source mapping
   const normalizedPlatform = normalizeToken(row.platform);
@@ -719,7 +725,7 @@ export function rowToCollectorCar(row: ListingRow, rates: Record<string, number>
     exteriorColor: row.color_exterior ?? null,
     interiorColor: row.color_interior ?? null,
     description: desc,
-    sellerNotes: row.seller_notes ?? null,
+    sellerNotes,
     originalCurrency: row.original_currency ?? null,
     soldPriceUsd: derived.soldPriceUsd,
     askingPriceUsd: derived.askingPriceUsd,

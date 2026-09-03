@@ -1,6 +1,7 @@
 import { load } from "cheerio";
 import type { Page } from "playwright-core";
 
+import { extractSellerDescription } from "@/lib/listingDescription";
 import type { ClassicComRawListing, DetailParsed } from "./types";
 import { isCloudflareChallenge, waitForCloudflareResolution } from "./browser";
 import { extractVinFromUrl } from "./id";
@@ -152,7 +153,11 @@ function buildDetailParsed(content: ClassicDetailContent, url: string): DetailPa
     location,
     images,
     url,
-    description: bodyText.trim() || null,
+    // `bodyText` is the whole page — it is the parsing substrate for the
+    // fields above, never the listing's description. Store only the seller's
+    // own block, so Classic.com's navigation, subscription pricing table and
+    // disclaimers can never surface inside a MonzaHaus listing.
+    description: extractSellerDescription(bodyText),
     exteriorColor: specs.ExtColor || null,
     interiorColor: specs.IntColor || null,
     engine: specs.Engine || null,

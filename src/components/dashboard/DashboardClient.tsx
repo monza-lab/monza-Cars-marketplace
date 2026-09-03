@@ -51,6 +51,11 @@ import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import { RegionalValuationSection } from "./context/shared/RegionalValuation"
 import type { CanonicalMarket, SegmentStats } from "@/lib/pricing/types"
 import { compareHomepageOrdering } from "@/lib/homepageRanking"
+import {
+  bandBracketsPrice,
+  familyBandLabel,
+  isFamilyBandRepresentative,
+} from "@/lib/familyFairValueBand"
 import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill"
 // FilterSidebar removed — filters now live only on brand detail pages
 
@@ -158,22 +163,33 @@ function resolveFairValueBand(
   const family = auction.family ?? null
   if (!market || !family) return null
 
+  // Everything below is the family segment's band, not this car's valuation.
+  // It is withheld from special variants and replicas, and from any car whose
+  // own price the band cannot bracket. See src/lib/familyFairValueBand.ts.
+  if (!isFamilyBandRepresentative(auction)) return null
+  const priceUsd = auction.soldPriceUsd ?? auction.askingPriceUsd ?? null
+  const usableBand = (low: number | null | undefined, high: number | null | undefined) => {
+    if (low == null || high == null || low <= 0 || high < low) return null
+    const band = { low: Math.round(low), high: Math.round(high) }
+    return bandBracketsPrice(band, priceUsd) ? band : null
+  }
+
   const cachedSegment = cachedFamilyValuation?.[market]
   if (cachedSegment) {
-    const cachedLow = cachedSegment.marketValue.p25Usd ?? cachedSegment.askMedian.p25Usd
-    const cachedHigh = cachedSegment.marketValue.p75Usd ?? cachedSegment.askMedian.p75Usd
-    if (cachedLow != null && cachedHigh != null && cachedLow > 0 && cachedHigh > 0) {
-      return { low: Math.round(cachedLow), high: Math.round(cachedHigh) }
-    }
+    const cached = usableBand(
+      cachedSegment.marketValue.p25Usd ?? cachedSegment.askMedian.p25Usd,
+      cachedSegment.marketValue.p75Usd ?? cachedSegment.askMedian.p75Usd,
+    )
+    if (cached) return cached
   }
 
   const regionalVal = computeRegionalValFromAuctions(familyAuctions)
   const segment = regionalVal[market]
   if (!segment) return null
-  const low = segment.marketValue.p25Usd ?? segment.askMedian.p25Usd
-  const high = segment.marketValue.p75Usd ?? segment.askMedian.p75Usd
-  if (low == null || high == null || low <= 0 || high <= 0) return null
-  return { low: Math.round(low), high: Math.round(high) }
+  return usableBand(
+    segment.marketValue.p25Usd ?? segment.askMedian.p25Usd,
+    segment.marketValue.p75Usd ?? segment.askMedian.p75Usd,
+  )
 }
 
 function pickBestSegment(regionalVal: Partial<Record<CanonicalMarket, SegmentStats>> | undefined): SegmentStats | null {
@@ -1044,7 +1060,10 @@ function MobileReportCard({
   const makeSlug = auction.make.toLowerCase().replace(/\s+/g, "-")
   const reportHref = `/cars/${makeSlug}/${auction.id}/report`
   const sourceUrl = (auction as Auction & { sourceUrl?: string | null }).sourceUrl
+  // Server-gated family band (see attachRegionalFairValues); shown only under
+  // the family's own name, never as this car's fair value.
   const fairUs = auction.fairValueByRegion?.US
+  const fairBandLabel = familyBandLabel(auction.family, auction.make)
   const region = auction.canonicalMarket ?? null
   const endMs = new Date(auction.endTime).getTime()
   // Honest-by-data: countdown only when the auction is real and active
@@ -1106,9 +1125,9 @@ function MobileReportCard({
           ) : null}
         </div>
 
-        {fairUs && fairUs.low > 0 && fairUs.high > 0 && (
+        {fairUs && fairUs.low > 0 && fairUs.high > 0 && fairBandLabel && (
           <p className="mt-0.5 text-[10px] text-muted-foreground">
-            {/* [HARDCODED] */}Fair {formatPrice(fairUs.low)}–{formatPrice(fairUs.high)}
+            {fairBandLabel} {formatPrice(fairUs.low)}–{formatPrice(fairUs.high)}
           </p>
         )}
 
@@ -1731,8 +1750,6 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
             )
             const cachedFamilyValuation = auction.family ? regionalValByFamily?.[auction.family] : undefined
             const band = resolveFairValueBand(auction, familyAuctions, cachedFamilyValuation)
-            const priceUsd = listingPriceUsd(auction, {})
-            const medianUsd = band ? (band.low + band.high) / 2 : null
 
             return (
               <div className="mt-auto grid grid-cols-3 gap-4 pt-4 border-t border-border">
@@ -1743,7 +1760,9 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
                     <span className="text-[9px] font-medium tracking-[0.15em] uppercase">{t("asset.metrics.trend")}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MarketDeltaPill priceUsd={priceUsd} medianUsd={medianUsd} />
+                    {/* No delta pill here: the only band available for one car
+                        is its family's, and a per-car delta against it is a
+                        claim we cannot support. */}
                     <p className="text-[13px] font-semibold text-positive">{trend}</p>
                   </div>
                 </div>
@@ -1757,6 +1776,11 @@ function AssetCard({ auction, allAuctions = [], regionalValByFamily }: { auction
                   <p className="text-[13px] text-foreground font-mono">
                     {band ? `${formatPrice(band.low)}–${formatPrice(band.high)}` : "—"}
                   </p>
+                  {band && familyBandLabel(auction.family, auction.make) && (
+                    <p className="text-[9px] text-muted-foreground">
+                      {familyBandLabel(auction.family, auction.make)}
+                    </p>
+                  )}
                 </div>
 
                 {/* Category */}

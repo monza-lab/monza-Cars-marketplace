@@ -29,6 +29,15 @@ import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { getStrictComparablesForModel } from "@/lib/db/queries"
 import { resolveReportToken } from "@/lib/reportAccess/repository"
 import { isPublicSampleReport } from "@/lib/sampleReport"
+import {
+  calculateLandedCost,
+  isDomesticRoute,
+  localeToDestination,
+  sourceToOriginCountry,
+  type Country,
+  type LandedCostBreakdown,
+} from "@/lib/landedCost"
+import { resolveCurrentPriceUsd } from "./reportListingFacts"
 
 export const dynamic = "force-dynamic"
 
@@ -216,6 +225,32 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     } catch { /* V3 not available */ }
   }
 
+  // ─── Landed cost ───────────────────────────────────────────────────
+  // Every CTA promises "Landed cost", but the v3 pipeline persists
+  // landed_cost = null, so stored reports (the public sample among them) showed
+  // "not estimated" under a promise. The estimate is deterministic from origin
+  // + destination + price + age, so compute it here for any report that lacks
+  // one instead of leaving the promise unpaid.
+  const landedCostOrigin = sourceToOriginCountry(car.platform)
+  const landedCostDestination: Country = localeToDestination(locale)
+  let landedCostEstimate: LandedCostBreakdown | null = null
+  if (!existingReport?.landed_cost) {
+    const priceUsd = resolveCurrentPriceUsd(car)
+    try {
+      if (landedCostOrigin && priceUsd > 0 && car.year) {
+        landedCostEstimate = await calculateLandedCost({
+          car: { priceUsd, year: car.year },
+          origin: landedCostOrigin,
+          destination: landedCostDestination,
+        })
+      }
+    } catch (err) {
+      console.error("[report] landed cost estimate failed", err)
+      landedCostEstimate = null
+    }
+  }
+  const landedCostDomestic = isDomesticRoute(landedCostOrigin, landedCostDestination)
+
   // ─── User access check ─────────────────────────────────────────────
   // A user has access if: (a) they already paid for this report,
   // or (b) they have explicit unlimited report access.
@@ -259,6 +294,9 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
         v3Report={v3Report}
         userHasAccess={userHasAccess}
         reportAccessToken={tokenAccess ? rawAccessToken : undefined}
+        landedCostEstimate={landedCostEstimate}
+        landedCostDestination={landedCostDestination}
+        landedCostDomestic={landedCostDomestic}
       />
     </Suspense>
   )

@@ -21,6 +21,7 @@ import {
   buildHomepageRankingContextFromSupply,
   rankHomepageListings,
 } from "./homepageRanking";
+import { bandBracketsPrice, isFamilyBandRepresentative } from "./familyFairValueBand";
 
 const DASHBOARD_AUX_QUERY_TIMEOUT_MS = 5_000;
 const DASHBOARD_VALUATION_CACHE_QUERY_TIMEOUT_MS = 2_000;
@@ -225,6 +226,12 @@ const FAIR_VALUE_CURRENCY = {
  * The dashboard valuation cache is the server-side source of truth for browse
  * bands. Keep the listing payload self-contained so BrowseCard can render the
  * same verified family/market evidence without recomputing it in the browser.
+ *
+ * A family band is the p25–p75 of the whole (family, market) segment, so it is
+ * only attached where it can honestly describe the car: never to a special
+ * variant or a replica, and never when it fails to bracket the car's own price.
+ * Everything that survives is rendered labelled as the family's range — the
+ * per-car number belongs to the Haus Report. See src/lib/familyFairValueBand.ts.
  */
 export function attachRegionalFairValues(
   cars: readonly CollectorCar[],
@@ -233,16 +240,19 @@ export function attachRegionalFairValues(
   return cars.map((car) => {
     const familyValuation = car.family ? regionalValByFamily[car.family] : undefined;
     if (!familyValuation) return car;
+    if (!isFamilyBandRepresentative(car)) return car;
 
+    const priceUsd = car.soldPriceUsd ?? car.askingPriceUsd ?? null;
     const fairValueByRegion = {} as NonNullable<CollectorCar["fairValueByRegion"]>;
     for (const market of DASHBOARD_REGION_ORDER) {
       const stats = familyValuation[market];
-      const low = stats.marketValue.p25Usd ?? stats.askMedian.p25Usd ?? 0;
-      const high = stats.marketValue.p75Usd ?? stats.askMedian.p75Usd ?? 0;
+      const low = Math.round(stats.marketValue.p25Usd ?? stats.askMedian.p25Usd ?? 0);
+      const high = Math.round(stats.marketValue.p75Usd ?? stats.askMedian.p75Usd ?? 0);
+      const usable = low > 0 && high >= low && bandBracketsPrice({ low, high }, priceUsd);
       fairValueByRegion[market] = {
         currency: FAIR_VALUE_CURRENCY[market],
-        low: Math.round(low),
-        high: Math.round(high),
+        low: usable ? low : 0,
+        high: usable ? high : 0,
       };
     }
 

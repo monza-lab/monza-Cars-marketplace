@@ -83,17 +83,47 @@ describe("BrowseCard — honest-by-data signals", () => {
     expect(container.querySelector("a")).toHaveAttribute("href", "/cars/porsche/test-1");
   });
 
-  it("shows the literal fair-value band when real regional evidence exists", () => {
+  it("shows a surviving band under the family's name, never as this car's fair value", () => {
     const car = makeCar({
+      title: "2020 Porsche 911 Carrera S",
+      model: "911",
+      trim: "Carrera S",
+      year: 2020,
+      family: "992",
+      currentBid: 150_000,
+      askingPriceUsd: 150_000,
       fairValueByRegion: {
-        US: { currency: "$", low: 244_079, high: 280_822 },
+        US: { currency: "$", low: 140_000, high: 165_000 },
         EU: { currency: "€", low: 0, high: 0 },
         UK: { currency: "£", low: 0, high: 0 },
         JP: { currency: "¥", low: 0, high: 0 },
       },
     });
     const { container } = render(<BrowseCard car={car} index={0} />);
-    expect(container.textContent ?? "").toMatch(/Fair value \$244[.,]079–\$280[.,]822/);
+    const text = container.textContent ?? "";
+
+    expect(text).toMatch(/992 family · \$140[.,]000–\$165[.,]000/);
+    expect(text).not.toMatch(/Fair value/);
+  });
+
+  it("withholds the band and the delta pill from a special variant", () => {
+    // makeCar() is a GT3 — the 992 band describes Carreras, not this car.
+    const car = makeCar({
+      family: "992",
+      askingPriceUsd: 200_000,
+      fairValueByRegion: {
+        US: { currency: "$", low: 140_000, high: 165_000 },
+        EU: { currency: "€", low: 0, high: 0 },
+        UK: { currency: "£", low: 0, high: 0 },
+        JP: { currency: "¥", low: 0, high: 0 },
+      },
+    });
+    const { container } = render(<BrowseCard car={car} index={0} />);
+    const text = container.textContent ?? "";
+
+    expect(text).not.toMatch(/family/i);
+    expect(text).not.toMatch(/[+-]\s?\d+\s?%/);
+    expect(text).not.toMatch(/at median/i);
   });
 
   it("does NOT render the LIVE badge regardless of status", () => {

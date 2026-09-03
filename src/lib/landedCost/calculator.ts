@@ -88,6 +88,19 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * True when the car is already in the buyer's country, so there is no landed
+ * cost to add. The UI needs this to explain a missing estimate honestly instead
+ * of implying the calculation failed.
+ */
+export function isDomesticRoute(
+  origin: OriginCountry | null | undefined,
+  destination: Country,
+): boolean {
+  if (!origin) return false;
+  return resolveEffectiveOrigin(origin).effective === destination;
+}
+
 export async function calculateLandedCost(input: {
   car: CarInput;
   origin: OriginCountry;

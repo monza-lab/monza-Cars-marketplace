@@ -37,4 +37,22 @@ describe("CookieBanner interruption timing", () => {
 
     expect(screen.getByRole("region", { name: "Cookie consent" })).toBeVisible()
   })
+
+  it("never covers an open sheet, so the email ask keeps its reassurance", () => {
+    const sheet = document.createElement("div")
+    sheet.setAttribute("role", "dialog")
+    sheet.setAttribute("data-state", "open")
+    document.body.appendChild(sheet)
+
+    try {
+      render(<CookieBanner />)
+      act(() => vi.advanceTimersByTime(8_000))
+      act(() => window.dispatchEvent(new Event("scroll")))
+      act(() => vi.advanceTimersByTime(600))
+
+      expect(screen.queryByRole("region", { name: "Cookie consent" })).toBeNull()
+    } finally {
+      sheet.remove()
+    }
+  })
 })

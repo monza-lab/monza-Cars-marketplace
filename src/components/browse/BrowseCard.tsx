@@ -7,7 +7,7 @@ import { useCurrency } from "@/lib/CurrencyContext";
 import { useLocale } from "next-intl";
 import { timeLeft } from "@/lib/makePageHelpers";
 import type { DashboardAuction } from "@/lib/dashboardCache";
-import { MarketDeltaPill } from "@/components/report/MarketDeltaPill";
+import { resolveFamilyBandLabel } from "@/lib/familyFairValueBand";
 import { SafeImage } from "@/components/dashboard/cards/SafeImage";
 import { PhotoPendingPill } from "@/components/cards/PhotoPendingPill";
 import { formatMileageForMarket, marketMileageLabel } from "@/lib/mileage";
@@ -82,10 +82,19 @@ export function BrowseCard({
   const makeSlug = car.make.toLowerCase().replace(/\s+/g, "-");
   const trans = formatTransmission(car.transmission);
   const region = regionCode(car);
+  // A card can only ever hold the band of the whole family; the per-car number
+  // is the Haus Report's. So the band is either labelled as the family's range
+  // or not shown, and it never feeds a delta pill — a 964 RS measured against
+  // the "964" band reads "+208 %" next to a hero that promises real values.
   const fairUs = car.fairValueByRegion?.US;
-  const fairUsMedian = fairUs && fairUs.low > 0 && fairUs.high > 0
-    ? (fairUs.low + fairUs.high) / 2
+  const familyBand = fairUs && fairUs.low > 0 && fairUs.high >= fairUs.low
+    ? { low: fairUs.low, high: fairUs.high }
     : null;
+  const familyBandLabel = resolveFamilyBandLabel(
+    car,
+    familyBand,
+    car.askingPriceUsd ?? car.soldPriceUsd ?? null,
+  );
   // Honest-by-data: countdown only renders for active auctions (future
   // endTime + at least one bid). 4 of 5 marketplace scrapers hardcode
   // bidCount=0, so this combo only fires for real auctions.
@@ -130,7 +139,6 @@ export function BrowseCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
 
           <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
-            <MarketDeltaPill priceUsd={car.currentBid} medianUsd={fairUsMedian} />
             <span className="rounded-full px-2 py-0.5 text-[9px] font-medium bg-background/85 text-foreground/80 border border-border backdrop-blur-md">
               {platformLabel}
             </span>
@@ -178,9 +186,9 @@ export function BrowseCard({
             )}
           </div>
 
-          {fairUs && fairUs.low > 0 && fairUs.high > 0 && (
+          {familyBand && familyBandLabel && (
             <p className="mt-1.5 text-[10px] text-muted-foreground/80">
-              Fair value {formatPrice(fairUs.low)}–{formatPrice(fairUs.high)}
+              {familyBandLabel} · {formatPrice(familyBand.low)}–{formatPrice(familyBand.high)}
             </p>
           )}
 
