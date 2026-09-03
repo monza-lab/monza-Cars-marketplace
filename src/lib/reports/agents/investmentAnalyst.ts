@@ -56,6 +56,12 @@ ${marketContext}
 ## Strategy Type
 ${strategyGuidance}
 
+## Editorial Guardrails
+- Do not use urgency or pressure language. State evidence and let the buyer decide.
+- Do not promise appreciation or returns; projections are scenarios with explicit uncertainty.
+- Do not state a percentile unless it is calculated from a verified distribution in the supplied data.
+- Avoid superlatives such as "unmissable", "exceptional opportunity", or "act decisively".
+
 ## Required Output (JSON)
 Provide a JSON object with:
 - strategy: { type: "${listingType}", maxBidRecommendation: number|null, bidTiming: string|null, reserveStrategy: string|null, openingOffer: number|null, walkAwayPrice: number|null, negotiationLeverage: string[], strategyInsight: string (200-400 words), potentialRepairs: { low: number, high: number, description: string } }

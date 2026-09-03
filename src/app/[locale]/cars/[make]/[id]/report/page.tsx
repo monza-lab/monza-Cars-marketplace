@@ -29,6 +29,7 @@ import type { HausReportV3 } from "@/lib/reports/types-v3"
 import { getStrictComparablesForModel } from "@/lib/db/queries"
 import { resolveReportToken } from "@/lib/reportAccess/repository"
 import { isPublicSampleReport } from "@/lib/sampleReport"
+import { sanitizePublicSampleTone } from "@/lib/publicSampleTone"
 import {
   calculateLandedCost,
   isDomesticRoute,
@@ -276,6 +277,11 @@ export default async function ReportPage({ params, searchParams }: ReportPagePro
     } catch {
       // Auth unavailable — leave as false
     }
+  }
+
+  if (publicSample) {
+    existingReport = sanitizePublicSampleTone(existingReport)
+    v3Report = sanitizePublicSampleTone(v3Report)
   }
 
   return (

@@ -82,8 +82,8 @@ describe("describeMarketContext", () => {
     expect(describeMarketContext(["US"])).toBe("United States market · mileage shown in miles");
   });
 
-  it("documents mixed-market mileage as card-specific", () => {
-    expect(describeMarketContext([])).toBe("All markets · mileage follows each card's market");
+  it("hides redundant context until a market filter is active", () => {
+    expect(describeMarketContext([])).toBe("");
     expect(describeMarketContext(["EU", "US"])).toBe("2 markets selected · mileage follows each card's market");
   });
 });

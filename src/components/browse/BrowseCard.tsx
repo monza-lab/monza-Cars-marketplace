@@ -14,17 +14,17 @@ import { formatMileageForMarket, marketMileageLabel } from "@/lib/mileage";
 import { markReportCtaClicked } from "@/lib/reportFunnel";
 
 const PLATFORM_SHORT: Record<string, string> = {
-  BRING_A_TRAILER: "BaT",
-  CARS_AND_BIDS: "C&B",
-  COLLECTING_CARS: "CC",
-  AUTO_SCOUT_24: "AS24",
-  AUTO_TRADER: "AT",
-  BE_FORWARD: "BF",
-  CLASSIC_COM: "Cls",
+  BRING_A_TRAILER: "Bring a Trailer",
+  CARS_AND_BIDS: "Cars & Bids",
+  COLLECTING_CARS: "Collecting Cars",
+  AUTO_SCOUT_24: "AutoScout24",
+  AUTO_TRADER: "AutoTrader",
+  BE_FORWARD: "BE FORWARD",
+  CLASSIC_COM: "CLASSIC.COM",
   ELFERSPOT: "Elferspot",
-  RM_SOTHEBYS: "RM",
-  BONHAMS: "BON",
-  GOODING: "G&C",
+  RM_SOTHEBYS: "RM Sotheby's",
+  BONHAMS: "Bonhams",
+  GOODING: "Gooding & Company",
 };
 
 export function parseEndTimeMs(value: string): number | null {

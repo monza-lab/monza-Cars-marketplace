@@ -97,7 +97,7 @@ function BrowseRescueCta() {
 }
 
 export function describeMarketContext(markets: string[]): string {
-  if (markets.length === 0) return "All markets · mileage follows each card's market";
+  if (markets.length === 0) return "";
   if (markets.length > 1) return `${markets.length} markets selected · mileage follows each card's market`;
 
   const names: Record<string, string> = {
@@ -473,13 +473,11 @@ export function BrowseClient({
       <BrowseRescueCta />
 
       <div className="max-w-[1600px] mx-auto px-3 md:px-6 py-4 md:py-8 pb-24 md:pb-8">
-        <p
-          role="status"
-          aria-live="polite"
-          className="mb-3 text-[11px] font-medium tracking-wide text-muted-foreground"
-        >
-          {describeMarketContext(filters.region)}
-        </p>
+        {describeMarketContext(filters.region) ? (
+          <p role="status" aria-live="polite" className="mb-3 text-[11px] font-medium tracking-wide text-muted-foreground">
+            {describeMarketContext(filters.region)}
+          </p>
+        ) : null}
         <BrowseResultsGrid reportHero={reportHero}>
           {filtered.length === 0 && (remoteLoading || isFilterPending) ? (
           /* Region/filter change in progress — show a spinner instead of the

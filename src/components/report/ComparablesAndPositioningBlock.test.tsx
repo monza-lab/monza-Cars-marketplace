@@ -40,6 +40,18 @@ describe("ComparablesAndPositioningBlock", () => {
     expect(screen.getByText(/Comparables \(6\)/)).toBeInTheDocument()
   })
 
+  it("withholds a zero percentile as insufficient evidence", () => {
+    render(
+      <ComparablesAndPositioningBlock
+        d3={{ ...d3, vin_percentile_within_variant: 0 }}
+        thisVinPriceUsd={225000}
+        comparables={comparables}
+      />
+    )
+    expect(screen.getByText(/Not enough data to compute percentile position/)).toBeInTheDocument()
+    expect(screen.queryByText(/0th percentile/)).toBeNull()
+  })
+
   it("switches to table tab and shows first 5 rows", () => {
     render(
       <ComparablesAndPositioningBlock

@@ -130,7 +130,7 @@ export function ComparablesAndPositioningBlock({
           ) : (
             <>
               <p className="text-[12px] text-muted-foreground">
-                {d3.vin_percentile_within_variant != null ? (
+                {d3.vin_percentile_within_variant != null && d3.vin_percentile_within_variant > 0 ? (
                   <>
                     {/* [HARDCODED] */}This VIN falls in the{" "}
                     <strong className="text-foreground">
@@ -142,8 +142,13 @@ export function ComparablesAndPositioningBlock({
                   "Not enough data to compute percentile position."
                 )}
               </p>
-              <div className="mt-3 h-48 w-full">
-                <ResponsiveContainer>
+              <div className="mt-3 h-48 min-w-0 w-full">
+                <ResponsiveContainer
+                  width="100%"
+                  height="100%"
+                  minWidth={0}
+                  initialDimension={{ width: 1, height: 192 }}
+                >
                   <BarChart data={chartData}>
                     <XAxis dataKey="label" tick={{ fontSize: 10 }} />
                     <Tooltip

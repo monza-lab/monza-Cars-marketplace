@@ -20,8 +20,9 @@
  * Does NOT run automatically from any cron or test.
  */
 
-import { resolve } from "path";
-import { existsSync, readFileSync } from "fs";
+import { dirname, resolve } from "path";
+import { appendFileSync, closeSync, existsSync, mkdirSync, openSync, readFileSync } from "fs";
+import { pathToFileURL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import {
   hasScrapedChrome,
@@ -76,15 +77,24 @@ export function mapRowToCleanup(row: CleanupRow): CleanupPatch | null {
   return dirty ? patch : null;
 }
 
+export function resolveBackupPath(args: string[]): string | null {
+  if (!args.includes("--apply")) return null;
+  const backupArg = args.find((arg) => arg.startsWith("--backup="));
+  const backupPath = backupArg?.slice("--backup=".length).trim();
+  if (!backupPath) throw new Error("--apply requires an explicit --backup=<path> recovery file");
+  return backupPath;
+}
+
 // ---------------------------------------------------------------------------
 // Main loop
 // ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 500;
-const CHUNK_SIZE = 100;
+const CHUNK_SIZE = 20;
 
 async function main(): Promise<void> {
   const apply = process.argv.includes("--apply");
+  const backupPath = resolveBackupPath(process.argv.slice(2));
   const sourceArg = process.argv.find((arg) => arg.startsWith("--source="));
   const source = sourceArg ? sourceArg.slice("--source=".length) : null;
 
@@ -101,6 +111,12 @@ async function main(): Promise<void> {
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  if (backupPath) {
+    mkdirSync(dirname(backupPath), { recursive: true });
+    closeSync(openSync(backupPath, "wx"));
+    console.log(`[clean-descriptions] Recovery backup: ${backupPath}`);
+  }
 
   let lastId = "";
   let scanned = 0;
@@ -155,16 +171,25 @@ async function main(): Promise<void> {
     }
 
     if (patches.length > 0 && apply) {
+      const originals = new Map(rows.map((row) => [row.id, row]));
       for (let index = 0; index < patches.length; index += CHUNK_SIZE) {
         const chunk = patches.slice(index, index + CHUNK_SIZE);
-        for (const patch of chunk) {
+        for (const { id } of chunk) {
+          const original = originals.get(id);
+          if (!original || !backupPath) throw new Error(`Cannot back up cleanup row ${id}`);
+          appendFileSync(backupPath, `${JSON.stringify(original)}\n`, "utf8");
+        }
+        const updates = await Promise.all(chunk.map(async (patch) => {
           const { id, ...values } = patch;
-          const { error: updateError } = await supabase
+          const { error } = await supabase
             .from("listings")
             .update(values)
             .eq("id", id);
-          if (updateError) {
-            console.error(`[clean-descriptions] Update error on ${id}:`, updateError.message);
+          return { id, error };
+        }));
+        for (const update of updates) {
+          if (update.error) {
+            console.error(`[clean-descriptions] Update error on ${update.id}:`, update.error.message);
             process.exit(1);
           }
         }
@@ -186,7 +211,11 @@ async function main(): Promise<void> {
 }
 
 // Self-execution guard: only run when this file is the entry point
-if (import.meta.url === `file://${process.argv[1]}`) {
+export function isDirectRun(moduleUrl: string, argvPath: string | undefined): boolean {
+  return Boolean(argvPath && moduleUrl === pathToFileURL(argvPath).href);
+}
+
+if (isDirectRun(import.meta.url, process.argv[1])) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);

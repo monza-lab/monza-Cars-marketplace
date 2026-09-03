@@ -41,7 +41,7 @@ describe("TopUpPresets", () => {
     // Click the Heavy preset card first (to set selection)
     fireEvent.click(screen.getByRole("button", { name: /10,000 Pistons/i }))
     // Then click the Top up CTA which uses onSelect
-    fireEvent.click(screen.getByRole("button", { name: /top up/i }))
+    fireEvent.click(screen.getByRole("button", { name: /get reports/i }))
     expect(onSelect).toHaveBeenCalledWith("topup_heavy")
   })
 

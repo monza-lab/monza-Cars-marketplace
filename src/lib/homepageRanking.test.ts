@@ -48,6 +48,18 @@ describe("homepage ranking", () => {
     );
   });
 
+  it("drops AutoScout equipment and dealer copy even when it leaked into model fields", () => {
+    const autoScout = listing("autoscout-raw", {
+      year: 2017,
+      model: "911 Carrera 4 GTS PDK Sport Chrono MwSt. ausweisbar",
+      trim: "Carrera 4 GTS",
+      title: "Porsche 911 Carrera 4 GTS | PDK | Sport Chrono | MwSt. ausweisbar",
+      platform: "AUTO_SCOUT_24",
+    });
+
+    expect(canonicalizeHomepageTitle(autoScout)).toBe("2017 Porsche 911 Carrera 4 GTS (991)");
+  });
+
   it("keeps garbage titles and implausibly cheap halo cars out of featured results", () => {
     const garbage = listing("garbage", {
       title: "Just a moment...",

@@ -104,7 +104,8 @@ export function canonicalizeHomepageTitle<T extends HomepageRankingListing>(list
   const make = String(listing.make || "Porsche").trim();
   const makePattern = new RegExp(`^${make.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+`, "i");
   const yearPattern = new RegExp(`^${listing.year}\\s+`);
-  let model = String(listing.model || "911")
+  const titleIdentity = String(listing.title || "").split("|")[0].trim();
+  let model = String(titleIdentity || listing.model || "911")
     .trim()
     .replace(yearPattern, "")
     .replace(makePattern, "")

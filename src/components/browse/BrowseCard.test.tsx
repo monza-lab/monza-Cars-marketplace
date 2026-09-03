@@ -55,6 +55,12 @@ function makeCar(overrides: Partial<DashboardAuction> = {}): DashboardAuction {
 }
 
 describe("BrowseCard — honest-by-data signals", () => {
+  it("spells out marketplace names instead of cryptic badges", () => {
+    const { container } = render(<BrowseCard car={makeCar({ platform: "CLASSIC_COM" })} index={0} />);
+    expect(container.textContent ?? "").toContain("CLASSIC.COM");
+    expect(container.textContent ?? "").not.toMatch(/\bCls\b/);
+  });
+
   it("is visible on the server response instead of waiting for hydration", () => {
     const { getByTestId } = render(<BrowseCard car={makeCar()} index={0} />);
     expect(getByTestId("browse-card")).toHaveAttribute("data-initial-visibility", "visible");

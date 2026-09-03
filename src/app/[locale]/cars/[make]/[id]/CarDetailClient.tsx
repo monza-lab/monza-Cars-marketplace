@@ -35,6 +35,7 @@ import {
 import { AdvisorBand } from "@/components/advisor/AdvisorBand"
 import type { CollectorCar } from "@/lib/curatedCars"
 import type { SimilarCarResult } from "@/lib/similarCars"
+import { carDisplayTitle } from "@/lib/carDisplayTitle"
 import type { DbMarketDataRow, DbComparableRow, DbAnalysisRow, DbSoldRecord } from "@/lib/db/queries"
 import type { HausReport } from "@/lib/fairValue/types"
 import { useRegion } from "@/lib/RegionContext"
@@ -96,6 +97,21 @@ function VerifiedSampleReportLink() {
     <Link href={href} className="inline-flex text-xs font-medium text-primary underline-offset-4 hover:underline">
       See a sample report →
     </Link>
+  )
+}
+
+function HausReportAddsCard() {
+  return (
+    <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+      <div className="flex items-center gap-2">
+        <FileText className="size-4 text-primary" />
+        <h2 className="text-[13px] font-semibold text-foreground">What the Haus Report adds</h2>
+      </div>
+      <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+        Specific-car fair value, verified comparables, risk and inspection questions, market context, and estimated landed cost.
+      </p>
+      <div className="mt-3"><VerifiedSampleReportLink /></div>
+    </div>
   )
 }
 
@@ -177,6 +193,7 @@ function StatCard({ label, value, icon }: {
 // ─── SIMILAR CAR CARD ───
 function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons?: string[] }) {
   const { formatPrice } = useCurrency()
+  const displayTitle = carDisplayTitle(car)
   return (
     <Link
       href={`/cars/${car.make.toLowerCase().replace(/\s+/g, "-")}/${car.id}`}
@@ -185,7 +202,7 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
       <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0">
         <SafeImage
           src={car.image}
-          alt={car.title}
+          alt={displayTitle}
           fill
           className="object-cover"
           sizes="80px"
@@ -199,7 +216,7 @@ function SimilarCarCard({ car, matchReasons }: { car: CollectorCar; matchReasons
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-medium text-foreground truncate group-hover:text-primary transition-colors">
-          {car.title}
+          {displayTitle}
         </p>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-[12px] font-display font-medium text-primary">
@@ -595,11 +612,7 @@ function CarContextPanel({
               <span className="text-[8px] text-muted-foreground uppercase tracking-wider">Trend</span>
               {hasMeaningfulTrend(car.trend, car.trendValue) ? (
                 <p className={`text-[13px] tabular-nums font-semibold ${car.trendValue > 0 ? "text-positive" : car.trendValue < 0 ? "text-destructive" : "text-muted-foreground"}`}>{car.trend}</p>
-              ) : (
-                <p className="text-[12px] text-muted-foreground italic">
-                  Included in the Haus Report
-                </p>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
@@ -743,9 +756,7 @@ function CarContextPanel({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-[11px] text-muted-foreground italic">Included in the Haus Report</p>
-          )}
+          ) : null}
         </div>
 
         {/* 7. EVENTS & COMMUNITY */}
@@ -777,9 +788,7 @@ function CarContextPanel({
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-[11px] text-muted-foreground italic">Included in the Haus Report</p>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -1190,11 +1199,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <span className={`text-[28px] font-bold tabular-nums ${
                     car.trendValue > 0 ? "text-positive" : "text-destructive"
                   }`}>{car.trend}</span>
-                ) : (
-                  <span className="text-[14px] text-muted-foreground italic block mt-1">
-                    Included in the Haus Report
-                  </span>
-                )}
+                ) : null}
               </div>
 
               {/* Cell 2: Market Position */}
@@ -1215,11 +1220,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       {isBelowFair ? t("investmentPassport.belowMarket") : t("investmentPassport.aboveMarket")}
                     </span>
                   </>
-                ) : (
-                  <span className="text-[11px] text-muted-foreground italic block mt-2">
-                    Included in the Haus Report
-                  </span>
-                )}
+                ) : null}
               </div>
 
               {/* Cell 3: Fair Value */}
@@ -1501,9 +1502,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
-            )}
+            ) : null}
           </CollapsibleSection>
 
           {/* 9. Questions to Ask Seller */}
@@ -1523,9 +1522,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
-            )}
+            ) : null}
           </CollapsibleSection>
 
           {/* 10. Pre-Purchase Inspection */}
@@ -1571,9 +1568,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-[13px] text-muted-foreground italic">Verified comparables are included in the Haus Report.</p>
-            )}
+            ) : null}
           </CollapsibleSection>
 
           {/* 12. Shipping Estimates */}
@@ -1594,9 +1589,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   <span className="text-[14px] tabular-nums font-semibold text-foreground">{formatPrice(shipping.ukImport)}</span>
                 </div>
               </div>
-            ) : (
-              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
-            )}
+            ) : null}
           </CollapsibleSection>
 
           {/* 13. Events & Community */}
@@ -1626,9 +1619,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-[13px] text-muted-foreground italic">Included in the Haus Report</p>
-            )}
+            ) : null}
           </CollapsibleSection>
 
           {/* 14. Similar Cars */}
@@ -1641,6 +1632,8 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
               </div>
             </CollapsibleSection>
           )}
+
+          <HausReportAddsCard />
 
           {/* Contextual Advisor — pre-populated with this car's title */}
           <AdvisorBand
@@ -1799,9 +1792,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-[12px] text-muted-foreground italic">Included in the Haus Report</p>
-                )}
+                ) : null}
               </div>
 
               {/* QUESTIONS TO ASK */}
@@ -1821,9 +1812,7 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-[12px] text-muted-foreground italic">Included in the Haus Report</p>
-                )}
+                ) : null}
               </div>
 
               {/* PRE-PURCHASE INSPECTION */}
@@ -1875,10 +1864,10 @@ export function CarDetailClient({ car, similarCars, dbMarketData, dbComparables 
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-[12px] text-muted-foreground italic">Verified comparables are included in the Haus Report.</p>
-                )}
+                ) : null}
               </div>
+
+              <HausReportAddsCard />
 
               {/* FULL REPORT CTA */}
               <button

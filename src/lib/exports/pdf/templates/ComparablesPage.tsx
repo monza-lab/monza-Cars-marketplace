@@ -27,7 +27,7 @@ export function ComparablesPage({
       <Text style={pdfStyles.h2}>Comparables & Peer Positioning</Text>
       {d3.variant_distribution_bins.length > 0 ? (
         <Text style={pdfStyles.body}>
-          {d3.vin_percentile_within_variant != null
+          {d3.vin_percentile_within_variant != null && d3.vin_percentile_within_variant > 0
             ? <>This VIN falls in the{" "}
                 <Text style={pdfStyles.bodyEmphasis}>
                   {d3.vin_percentile_within_variant}th percentile

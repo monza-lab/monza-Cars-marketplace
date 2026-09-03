@@ -15,12 +15,12 @@ import { track } from "@/lib/analytics/events"
 // Re-translated to the new wallet vocabulary where helpful.
 const FAQ_ITEMS = [
   {
-    q: "Do Pistons expire?",
-    a: "Top-up Pistons never expire. Monthly keeps reports unlimited while the subscription is active.",
+    q: "Do report credits expire?",
+    a: "Purchased report credits never expire. A monthly plan keeps Haus Reports unlimited while the subscription is active.",
   },
   {
-    q: "What can I do with Pistons?",
-    a: "Pistons are your in-app currency: chat with the advisor (1 Piston), run marketplace queries (~5), deep research (~25), or generate a full Haus Report (1,000).",
+    q: "What does a Haus Report include?",
+    a: "Each report covers specific-car fair value, comparable sales, risks, inspection questions, and estimated landed cost. One report uses 1,000 Pistons from your wallet.",
   },
   {
     q: "What's the difference between top-up and subscription?",

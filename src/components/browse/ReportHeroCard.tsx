@@ -15,19 +15,19 @@ export function ReportHeroCard({
   return (
     <section
       id="haus-report-hero"
-      className="relative overflow-hidden rounded-xl border border-primary/35 bg-[linear-gradient(135deg,var(--card)_0%,color-mix(in_oklab,var(--primary)_10%,var(--card))_100%)] p-5 shadow-sm sm:col-span-2 sm:p-7"
+      className="relative overflow-hidden rounded-xl border border-primary/35 bg-[linear-gradient(135deg,var(--card)_0%,color-mix(in_oklab,var(--primary)_10%,var(--card))_100%)] p-4 shadow-sm sm:col-span-2 sm:p-7"
       aria-labelledby="haus-report-hero-title"
     >
       <div className="relative z-10 max-w-2xl">
         <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-primary">Haus Report</p>
-        <h1 id="haus-report-hero-title" className="mt-3 max-w-xl font-serif text-3xl leading-[1.05] text-foreground sm:text-4xl">
+        <h1 id="haus-report-hero-title" className="mt-2 max-w-xl font-serif text-[27px] leading-[1.05] text-foreground sm:mt-3 sm:text-4xl">
           Know what any Porsche is actually worth.
         </h1>
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p className="mt-2 max-w-xl text-xs leading-relaxed text-muted-foreground sm:mt-3 sm:text-base">
           Pick any car below — your first investment-grade report is free. No account needed.
         </p>
-        <p className="mt-4 text-xs font-medium tracking-wide text-foreground/80">{proof}</p>
-        <div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+        <p className="mt-2 text-[11px] font-medium tracking-wide text-foreground/80 sm:mt-4 sm:text-xs">{proof}</p>
+        <div className="mt-3 flex flex-row flex-wrap items-center gap-3 sm:mt-5">
           {sampleReportUrl ? (
             <a
               href={sampleHref}
@@ -50,7 +50,7 @@ export function ReportHeroCard({
             <ArrowDown className="size-3.5" />
           </a>
         </div>
-        <div className="mt-4"><FreeReportAllowanceNote /></div>
+        <div className="mt-2 sm:mt-4"><FreeReportAllowanceNote /></div>
       </div>
       <div aria-hidden="true" className="absolute -right-20 -top-24 size-72 rounded-full border border-primary/15" />
       <div aria-hidden="true" className="absolute -right-8 -top-10 size-40 rounded-full border border-primary/15" />
