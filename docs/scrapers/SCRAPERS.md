@@ -1168,18 +1168,7 @@ With 2-min pause: ~55 min/iteration. Typical runs converge in 3-5 iterations (~4
 
 ### Automated schedule (GitHub Actions)
 
-**Workflow:** `.github/workflows/enrichment-loop.yml`
-**Schedule:** 12:00 UTC daily (after all individual enrichment jobs finish)
-
-The GHA workflow starts a Next.js dev server in the background so both CLI and cron-route scrapers run. Timeout: 6 hours.
-
-**Trigger manually:** Actions > Enrichment Loop > Run workflow:
-
-| Input | Default | Description |
-|-------|---------|-------------|
-| Max loop iterations | `5` | How many times to repeat |
-| Pause between iterations | `2` | Minutes between iterations |
-| Skip DB writes | `false` | Dry run mode |
+The legacy enrichment loop remains available for interactive diagnosis. The scheduled workflow at `.github/workflows/enrichment-loop.yml` now runs the strict queue-driven assurance repair at 12:00 UTC. It starts the application server, executes `npm run scrapers:assurance:repair`, uploads the full assurance artifact and repair logs, and fails unless the final contract reaches 100% resolution.
 
 ---
 
@@ -1414,11 +1403,13 @@ npm run scrapers:assurance:canary
 # Tests + inventory + read-only scan + canaries + strict registered-job health audit
 npm run scrapers:assurance
 
-# Full workflow plus at most three non-destructive enrichment iterations
+# Full workflow plus at most three queue-driven non-destructive repair waves
 npm run scrapers:assurance:repair
 ```
 
-`DATABASE_URL` is required for a full listing scan. Canaries require the Supabase variables used by the existing collector CLIs, even though `SCRAPER_ASSURANCE_CANARY=1` and each command's dry-run flag prevent writes. Shared auction sources are checked through both the Porsche and Ferrari collectors. Repair additionally requires `CRON_SECRET` for eligible enrichment routes. `SCRAPER_RUNNER_BASE_URL` may select an HTTPS deployment; otherwise the runner uses `NEXT_PUBLIC_APP_URL` or local `http://localhost:3000`.
+`DATABASE_URL` is required for a full listing scan. Canaries require the Supabase variables used by the existing collector CLIs, even though `SCRAPER_ASSURANCE_CANARY=1` and each command's dry-run flag prevent writes. Shared auction sources are checked through both the Porsche and Ferrari collectors. Repair additionally requires `CRON_SECRET` for eligible enrichment routes. Set `SCRAPER_RUNNER_BASE_URL` to a reachable HTTPS deployment, or start the local application and use `http://127.0.0.1:3000`.
+
+Repair consumes the actual listing-field repair queue. Each wave deduplicates the manifest-declared jobs required by current gaps, runs every safe CLI and cron implementation, fetches a fresh production snapshot, and rebuilds the queue. It stops successfully only at 100% contract resolution. A timeout, circuit breaker, unavailable cron target, command failure, zero-progress wave, missing job mapping, or exhausted iteration budget is persisted as a blocker and returns nonzero.
 
 Two percentages are intentionally reported:
 
@@ -1445,7 +1436,9 @@ Exit codes are stable for automation:
 
 Timestamped machine-readable reports are written to `agents/testscripts/artifacts/scraper-assurance-*.json` and are ignored by Git. Console output shows at most 100 gap examples; the artifact retains the full listing-and-field repair queue.
 
-The repair boundary is deliberately narrow. Repair starts only after focused tests, inventory checks, and every live canary pass. The weekly workflow may add or correct listing enrichment fields and may record verified field evidence. It never selects cleanup, delist, bulk lifecycle-status, deletion, migration, secret-change, merge, or deployment operations. The evidence CLI updates only `enrichment_meta` in a locked transaction after confirming the active listing, exact source URL, registered source, and allowed field contract.
+The repair boundary is deliberately narrow. Repair starts only after focused tests, inventory checks, and every live canary pass. The deterministic command may add or correct listing enrichment fields and may record verified field evidence. It never selects cleanup, delist, bulk lifecycle-status, deletion, migration, or secret-change operations. The evidence CLI updates only `enrichment_meta` in a locked transaction after confirming the active listing, exact source URL, registered source, and allowed field contract.
+
+The scheduled Codex automation owns code delivery. When a scraper defect requires code changes, it must demonstrate a failing regression test, make the smallest repair, rerun the strict live contract, and evaluate the release observations with `npm run scrapers:repair-release -- --input=<file>`. It may enable squash auto-merge only when that gate reports `eligible: true`; it then verifies that the merged commit is the ready Vercel production deployment and runs post-deployment smoke checks. Any missing check or production mismatch remains blocked and is not reported as deployed.
 
 ---
 

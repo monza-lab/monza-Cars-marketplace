@@ -32,6 +32,19 @@ describe("scraper assurance manifest", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  it("maps every source repair job to a safe registered job for that source", () => {
+    const jobsById = new Map(SCRAPER_JOBS.map((job) => [job.id, job]));
+    for (const source of ASSURANCE_SOURCES) {
+      for (const repairJobId of source.repairJobIds) {
+        const repairJob = jobsById.get(repairJobId);
+        expect(repairJob, `${source.id} repair job ${repairJobId} is missing`).toBeDefined();
+        expect(repairJob?.destructive, `${source.id} repair job ${repairJobId} is destructive`).toBe(false);
+        expect(repairJob?.sourceIds, `${source.id} repair job ${repairJobId} does not cover its source`)
+          .toContain(source.id);
+      }
+    }
+  });
+
   it("maps shared auction collectors to all three auction sources", () => {
     expect(getSourceIdsForScraper("porsche")).toEqual([
       "BaT",

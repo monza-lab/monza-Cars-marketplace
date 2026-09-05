@@ -410,6 +410,17 @@ export function validateAssuranceManifest(rootDir: string): string[] {
         errors.push(`${source.id} canary ${candidate.jobId} lacks dry-run protection`);
       }
     }
+    for (const repairJobId of source.repairJobIds) {
+      const repairJob = SCRAPER_JOBS.find((candidate) => candidate.id === repairJobId);
+      if (!repairJob) {
+        errors.push(`${source.id} references unknown repair job ${repairJobId}`);
+        continue;
+      }
+      if (repairJob.destructive) errors.push(`${source.id} references destructive repair job ${repairJobId}`);
+      if (!repairJob.sourceIds.includes(source.id)) {
+        errors.push(`${source.id} repair job ${repairJobId} does not cover the source`);
+      }
+    }
   }
 
   for (const candidate of SCRAPER_JOBS) {

@@ -11,6 +11,7 @@
  *   npx tsx scripts/run-scrapers.ts --enrich-loop                # Loop until quality targets met (max 10 iterations)
  *   npx tsx scripts/run-scrapers.ts --enrich-loop --max-iterations=20 --pause=5
  *   npx tsx scripts/run-scrapers.ts --enrich-loop --fail-on-gaps # Strict quality gate for manual checks
+ *   npx tsx scripts/run-scrapers.ts --repair-jobs=bat-detail,enrich-vin
  */
 
 import { spawn, type ChildProcess } from "node:child_process";
@@ -25,6 +26,8 @@ import {
   shouldFailEnrichmentLoopRun,
 } from "../src/features/scrapers/common/enrichmentLoopPolicy";
 import {
+  ASSURANCE_RUNNER_JOB_MAP,
+  SCRAPER_JOBS,
   isDestructiveRunnerJob,
   validateRunnerInventory,
 } from "../src/features/scrapers/common/assurance/manifest";
@@ -462,10 +465,10 @@ interface CliFlags {
   maxIterations: number;    // NEW — default 10
   pauseMinutes: number;     // NEW — default 2
   failOnGaps: boolean;
+  repairJobIds: string[];
 }
 
-function parseFlags(): CliFlags {
-  const args = process.argv.slice(2);
+function parseFlags(args = process.argv.slice(2)): CliFlags {
 
   // Parse --max-iterations=N (default 10)
   const maxIterMatch = args.find((a) => a.startsWith("--max-iterations="));
@@ -474,6 +477,11 @@ function parseFlags(): CliFlags {
   // Parse --pause=N in minutes (default 2)
   const pauseMatch = args.find((a) => a.startsWith("--pause="));
   const pauseMinutes = pauseMatch ? parseInt(pauseMatch.split("=")[1], 10) || 2 : 2;
+  const repairJobsMatch = args.find((argument) => argument.startsWith("--repair-jobs="));
+  const repairJobIds = repairJobsMatch
+    ? repairJobsMatch.slice("--repair-jobs=".length).split(",").map((value) => value.trim()).filter(Boolean)
+    : [];
+  if (repairJobsMatch && repairJobIds.length === 0) throw new Error("--repair-jobs must include at least one job id");
 
   return {
     full: args.includes("--full"),
@@ -484,7 +492,30 @@ function parseFlags(): CliFlags {
     maxIterations,
     pauseMinutes,
     failOnGaps: args.includes("--fail-on-gaps"),
+    repairJobIds,
   };
+}
+
+export function resolveRepairRunnerIds(jobIds: readonly string[]): string[] {
+  const jobsById = new Map(SCRAPER_JOBS.map((job) => [job.id, job]));
+  const requested = new Set(jobIds);
+  for (const jobId of requested) {
+    const job = jobsById.get(jobId);
+    if (!job) throw new Error(`unknown assurance repair job ${jobId}`);
+    if (job.destructive) throw new Error(`destructive assurance repair job ${jobId} is prohibited`);
+  }
+
+  const runnerIds = Object.entries(ASSURANCE_RUNNER_JOB_MAP)
+    .filter(([, jobId]) => requested.has(jobId))
+    .map(([runnerId]) => runnerId)
+    .filter((runnerId) => !isDestructiveRunnerJob(runnerId))
+    .sort();
+  for (const jobId of requested) {
+    if (!runnerIds.some((runnerId) => ASSURANCE_RUNNER_JOB_MAP[runnerId] === jobId)) {
+      throw new Error(`assurance repair job ${jobId} has no runner implementation`);
+    }
+  }
+  return runnerIds;
 }
 
 // ── Dev server detection ────────────────────────────────────────────
@@ -574,6 +605,17 @@ async function selectScrapers(
   flags: CliFlags,
   devServerUp: boolean
 ): Promise<ScraperDef[]> {
+  if (flags.repairJobIds.length > 0) {
+    const runnerIds = new Set(resolveRepairRunnerIds(flags.repairJobIds));
+    const selected = SCRAPERS.filter((scraper) => runnerIds.has(scraper.id));
+    const unavailableCronJobs = selected.filter((scraper) => scraper.type === "cron" && !devServerUp);
+    if (unavailableCronJobs.length > 0) {
+      throw new Error(
+        `Repair cron target is unavailable for: ${unavailableCronJobs.map((scraper) => scraper.id).join(", ")}`,
+      );
+    }
+    return selected;
+  }
   if (flags.full) {
     return SCRAPERS.filter((s) => s.type === "cli" || devServerUp);
   }
@@ -608,7 +650,7 @@ async function selectScrapers(
 
 // ── Execution ───────────────────────────────────────────────────────
 
-interface RunResult {
+export interface RunResult {
   id: string;
   name: string;
   phase: Phase;
@@ -642,7 +684,14 @@ function parseCliProgress(result: RunResult): { discovered: number; written: num
   };
 }
 
-function classifyLoopResult(result: RunResult): RunResult {
+export function classifyLoopResult(result: RunResult): RunResult {
+  if (/circuit[ -]?break/i.test(`${result.stdout}\n${result.stderr}`)) {
+    return {
+      ...result,
+      status: "failed",
+      stderr: [result.stderr, "Repair job triggered a circuit breaker"].filter(Boolean).join("\n"),
+    };
+  }
   const cronDiscovered = readNumericField(result.cronResponse, [
     "discovered",
     "totalDiscovered",
@@ -1000,7 +1049,8 @@ async function main(): Promise<void> {
   console.log("");
 
   // ── TUI mode selector (no CLI flags) ─────────────────────────────
-  const hasCliMode = flags.full || flags.discovery || flags.enrichment || flags.enrichLoop;
+  const hasCliMode = flags.full || flags.discovery || flags.enrichment || flags.enrichLoop
+    || flags.repairJobIds.length > 0;
   if (!hasCliMode) {
     const modeResponse = await prompts({
       type: "select",
